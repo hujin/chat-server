@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>terse chat</title>
+    <link rel="stylesheet" href="./assets/css/base.css"/>
+    <link rel="stylesheet" href="./assets/css/main.css"/>
+    <style>
+        html,body{
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+        h1{
+            -webkit-user-select:none;
+            -webkit-app-region:drag;
+        }
+    </style>
+</head>
+<body>
+    <div id="window">
+        <div id="slidebar">
+            <div class="user-icon">
+                <img src="./assets/img/1.jpg" alt=""/>
+            </div>
+        </div>
+        <div id="chatlist">
+            <ul>
+                <li class="chat-item" data-user="van">
+                    <div class="chat-icon">
+                        <img src="./assets/img/2.png" alt=""/>
+                        <i class="chat-message-count">1</i>
+                    </div>
+                    <div class="chat-info">
+                        <span class="chat-nikyname">Van</span>
+                        <span class="chat-last-date">12:00:00</span>
+                        <span class="chat-last-message">[流泪]</span>
+                    </div>
+                </li>
+                <li class="chat-item active" data-user="vim">
+                    <div class="chat-icon">
+                        <img src="./assets/img/2.png" alt=""/>
+                    </div>
+                    <div class="chat-info">
+                        <span class="chat-nikyname">Vim</span>
+                        <span class="chat-last-date">12:00:00</span>
+                        <span class="chat-last-message">[流泪]</span>
+                    </div>
+                </li>
+                <li class="chat-item" data-user="king">
+                    <div class="chat-icon">
+                        <img src="./assets/img/1.jpg" alt=""/>
+                    </div>
+                    <div class="chat-info">
+                        <span class="chat-nikyname">King</span>
+                        <span class="chat-last-date">12:00:00</span>
+                        <span class="chat-last-message">[流泪]</span>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <div id="chat-message-panel">
+            <div class="chat-message-history">
+
+            </div>
+            <div class="chat-message-container">
+                <div class="chat-message-toolbar">
+                    <a class="iconfont icon-emoji"></a>
+                    <a class="iconfont icon-jianqie"></a>
+                    <div class="face-panel"></div>
+                </div>
+                <div class="chat-message-content"  >
+                    <div class="chat-message-enter" contentEditable="true" data-send-user="van">
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="ui-mask"></div>
+        <div class="ui-dialog">
+            <div class="ui-dialog-header">
+                <h3 class="ui-dialog-header-text">登陆</h3>
+            </div>
+            <div class="ui-dialog-container">
+                <form action="">
+                    <div class="ui-from-row">
+                        <label for="userid">用户名:</label>
+                        <input type="text" class="userid" id="userid" value="van" />
+                    </div>
+                    <div class="ui-from-row">
+                        <input class="ui-button ui-button-login" type="button" value="登陆"/>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script src="scripts/main.js"></script>
+    <script src="assets/libs/jquery-1.9.1.min.js"></script>
+    <script src="scripts/chat.js"></script>
+    <script src="../node_modules/socket.io/node_modules/socket.io-client/socket.io.js"></script>
+    <script>
+        var iosocket,oldSendUser;
+        $(function(){
+            $(".ui-button-login").click(function(){
+                var userid = $('.userid').val();
+                document.title = "terse chat -" + userid;
+                iosocket = io('http://192.168.1.210:8081/',{query:{user:userid}});
+
+                iosocket.on('connect',function(){
+                    iosocket.on('private message',function(msg){
+                        var receiveMsg= '<div class="rece-message">';
+                        receiveMsg+='   <div class="rece-user-icon">';
+                        receiveMsg+='       <img src="./assets/img/2.png" alt=""/>';
+                        receiveMsg+='   </div>';
+                        receiveMsg+='   <div class="rece-message-container">';
+                        receiveMsg+='       <div class="rece-message-content">'  + msg + '</div>';
+                        receiveMsg+='       <i class="rece-message-arrow"></i>';
+                        receiveMsg+='       <i class="rece-message-shadow"></i>';
+                        receiveMsg+='   </div>';
+                        receiveMsg+='</div>';
+                        receiveMsg+='<div class="clearfix"></div>';
+                        $('.chat-message-history').append(receiveMsg);
+                    });
+                });
+                $(".ui-mask").hide();
+                $(".ui-dialog").hide();
+            });
+
+            $(".chat-item").click(function(){
+                var index = $(this).index(),
+                    sendUser = $(this).attr("data-user");
+
+                $(".chat-item").removeClass("active").eq(index).addClass("active");
+                oldSendUser = $(".chat-message-enter").attr("data-send-user");
+                $(".chat-message-enter").attr("data-send-user",sendUser);
+                if(oldSendUser != sendUser){
+                    $('.chat-message-history').html("");
+                }
+            });
+
+            $('.chat-message-enter').keypress(function(e){
+                if(event.which == 13){
+                    event.preventDefault();
+                    var msg = $('.chat-message-enter').html(),
+                        sendUser = $(".chat-message-enter").attr("data-send-user");
+
+                    var sendMsg= '<div class="send-message">';
+                    sendMsg+='   <div class="send-user-icon">';
+                    sendMsg+='       <img src="./assets/img/1.jpg" alt=""/>';
+                    sendMsg+='   </div>';
+                    sendMsg+='   <div class="send-message-container">';
+                    sendMsg+='       <div class="send-message-content">' + msg + '</div>';
+                    sendMsg+='       <i class="send-message-arrow"></i>';
+                    sendMsg+='       <i class="send-message-shadow"></i>';
+                    sendMsg+='   </div>';
+                    sendMsg+='</div>';
+                    sendMsg+='<div class="clearfix"></div>';
+                    iosocket.emit('say to',sendUser,msg);
+                    $('.chat-message-history').append(sendMsg);
+                    $('.chat-message-enter').html("");
+                }
+            });
+
+        });
+    </script>
+</body>
+</html>
